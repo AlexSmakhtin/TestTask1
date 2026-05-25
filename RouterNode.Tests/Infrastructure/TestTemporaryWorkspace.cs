@@ -1,16 +1,21 @@
+using RouterNode.Domain.Files;
 using RouterNode.Infrastructure.Files;
+using OptionsFactory = Microsoft.Extensions.Options.Options;
 
 namespace RouterNode.Tests.Infrastructure;
 
-public class TestTemporaryWorkspace : IDisposable
+public sealed class TestTemporaryWorkspace : IDisposable
 {
     private string WorkspacePath { get; }
 
-    private FileSystemPackageOptions Options { get; }
+    public FileSystemPackageOptions Options { get; }
 
-    public TestTemporaryWorkspace(FileSystemPackageOptions options)
+    public IPackageFilePathResolver PathResolver { get; }
+
+    private TestTemporaryWorkspace(FileSystemPackageOptions options)
     {
         Options = options;
+        PathResolver = new PackageFilePathResolver(OptionsFactory.Create(options));
         WorkspacePath = Directory.GetParent(Options.InboxPath)?.FullName
                         ?? throw new InvalidOperationException("Inbox path must have a parent directory.");
 
@@ -21,9 +26,12 @@ public class TestTemporaryWorkspace : IDisposable
         Directory.CreateDirectory(Options.DeadLetterPath);
     }
 
-    public async Task InitializeAsync()
+    public static async Task<TestTemporaryWorkspace> CreateAsync()
     {
-        await File.WriteAllTextAsync(Options.SchemaPath, TestXmlSchemas.PackageSchema);
+        var workspace = new TestTemporaryWorkspace(TestFileSystemPackageOptionsBuilder.Create());
+        await File.WriteAllTextAsync(workspace.Options.SchemaPath, TestXmlSchemas.PackageSchema);
+
+        return workspace;
     }
 
     public async Task<string> CreatePackage(string passport)

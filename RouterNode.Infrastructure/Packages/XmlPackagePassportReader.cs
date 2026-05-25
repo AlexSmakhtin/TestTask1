@@ -1,36 +1,35 @@
 using System.Xml;
 using System.Xml.Serialization;
-using RouterNode.Application.Abstractions;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
+using RouterNode.Domain.Files;
 using RouterNode.Domain.Packages;
-using RouterNode.Infrastructure.Files;
 using RouterNode.Infrastructure.Packages.XmlModels;
 
 namespace RouterNode.Infrastructure.Packages;
 
 public class XmlPackagePassportReader : IPackagePassportReader
 {
-    private IPackageFileSystemPaths PathsHelper { get; }
+    private IPackageFilePathResolver PathResolver { get; }
 
     private XmlReaderSettings XmlReaderSettings { get; }
 
-    public XmlPackagePassportReader(IPackageFileSystemPaths pathsHelper)
+    public XmlPackagePassportReader(IPackageFilePathResolver pathResolver)
     {
-        PathsHelper = pathsHelper;
+        PathResolver = pathResolver;
         XmlReaderSettings = new XmlReaderSettings
         {
             Async = true,
             ValidationType = ValidationType.Schema
         };
 
-        XmlReaderSettings.Schemas.Add(targetNamespace: null, PathsHelper.SchemaPath);
+        XmlReaderSettings.Schemas.Add(targetNamespace: null, PathResolver.SchemaPath);
     }
 
     private static readonly XmlSerializer Serializer = new(typeof(ShipOrderXml));
 
     public Task<PackagePassport> ReadAsync(InboxPackage package, CancellationToken cancellationToken)
     {
-        var passportPath = PathsHelper.GetPassportPath(package.FullPath);
+        var passportPath = PathResolver.GetPassportPath(package.FullPath);
 
         return ReadPassportAsync(passportPath, cancellationToken);
     }
@@ -50,9 +49,9 @@ public class XmlPackagePassportReader : IPackagePassportReader
 
     private async Task ValidateAsync(string passportXml, CancellationToken cancellationToken)
     {
-        if (!File.Exists(PathsHelper.SchemaPath))
+        if (!File.Exists(PathResolver.SchemaPath))
         {
-            throw new FileNotFoundException("Package XML schema was not found.", PathsHelper.SchemaPath);
+            throw new FileNotFoundException("Package XML schema was not found.", PathResolver.SchemaPath);
         }
 
         using var textReader = new StringReader(passportXml);

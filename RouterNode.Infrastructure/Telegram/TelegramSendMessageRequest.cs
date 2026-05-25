@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 
 namespace RouterNode.Infrastructure.Telegram;
 

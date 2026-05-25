@@ -1,4 +1,4 @@
-namespace RouterNode.Options;
+namespace RouterNode.Infrastructure.Packages;
 
 public class PackageRouterOptions
 {

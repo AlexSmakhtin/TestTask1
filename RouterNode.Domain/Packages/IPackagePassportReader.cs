@@ -1,7 +1,6 @@
-using RouterNode.Domain.Packages;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
 
-namespace RouterNode.Application.Abstractions;
+namespace RouterNode.Domain.Packages;
 
 public interface IPackagePassportReader
 {

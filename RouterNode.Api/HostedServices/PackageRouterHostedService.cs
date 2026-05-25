@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
-using RouterNode.Application.Packages;
-using RouterNode.Options;
+using RouterNode.Domain.Routing;
+using RouterNode.Infrastructure.Packages;
 
 namespace RouterNode.HostedServices;
 
@@ -23,7 +23,7 @@ public sealed class PackageRouterHostedService(IPackageRouter packageRouter,
                 if (packagesProcessed > 0 || packagesFailed > 0)
                 {
                     logger.LogInformation(
-                        "Package routing iteration completed. Packages processed: {PackagesProcessed}, items routed: {ItemsRouted}, packages failed: {PackagesFailed}",
+                        "Routing iteration completed. Packages processed: {PackagesProcessed}, items routed: {ItemsRouted}, packages failed: {PackagesFailed}",
                         packagesProcessed, itemsRouted, packagesFailed);
                 }
 
@@ -31,7 +31,7 @@ public sealed class PackageRouterHostedService(IPackageRouter packageRouter,
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                logger.LogError(exception, "Package routing iteration failed.");
+                logger.LogError(exception, "Routing iteration failed.");
             }
         }
     }

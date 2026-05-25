@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Options;
-using RouterNode.Application.Abstractions;
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
+using RouterNode.Domain.Notifications;
 
 namespace RouterNode.Infrastructure.Telegram;
 

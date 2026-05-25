@@ -1,7 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using RouterNode.Domain.Packages;
 
-namespace RouterNode.Domain.Routing;
+namespace RouterNode.Application.Packages;
 
 public sealed class SafePackageFolderNamePolicy : IPackageFolderNamePolicy
 {

@@ -1,8 +1,5 @@
-using Microsoft.Extensions.Options;
-using RouterNode.Application.Packages;
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 using RouterNode.Domain.Routing;
-using RouterNode.Infrastructure.Files;
 using RouterNode.Infrastructure.Packages;
 using Xunit;
 
@@ -14,10 +11,7 @@ public class XmlPackageInfrastructureTests
     public async Task XmlPackagePassportReader_ReadsValidPassport()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        IPackageFileSystemPaths paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var packageDirectory = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -31,7 +25,7 @@ public class XmlPackageInfrastructureTests
                              </item>
                            </shiporder>
                            """);
-        var reader = new XmlPackagePassportReader(paths);
+        var reader = new XmlPackagePassportReader(workspace.PathResolver);
 
         // Act
         var passport = await reader.ReadAsync(new InboxPackage("package", packageDirectory), CancellationToken.None);
@@ -47,10 +41,7 @@ public class XmlPackageInfrastructureTests
     public async Task XmlPackagePassportReader_RejectsPassportThatDoesNotMatchSchema()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        IPackageFileSystemPaths paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var packageDirectory = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -63,7 +54,7 @@ public class XmlPackageInfrastructureTests
                              </item>
                            </shiporder>
                            """);
-        var reader = new XmlPackagePassportReader(paths);
+        var reader = new XmlPackagePassportReader(workspace.PathResolver);
 
         // Act-Assert
         await Assert.ThrowsAsync<System.Xml.Schema.XmlSchemaValidationException>(() =>
@@ -74,10 +65,7 @@ public class XmlPackageInfrastructureTests
     public async Task XmlOutgoingPackageWriter_CopiesAttachmentAndWritesNewPassport()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        var paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var sourcePackage = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -91,28 +79,27 @@ public class XmlPackageInfrastructureTests
                            </shiporder>
                            """);
         var sourceInboxPackage = new InboxPackage("package", sourcePackage);
-        await File.WriteAllTextAsync(paths.GetSourceAttachmentPath(sourceInboxPackage, "data.txt"), "payload");
-        var writer = new XmlOutgoingPackageWriter(paths);
+        await File.WriteAllTextAsync(workspace.PathResolver.GetSourceAttachmentPath(sourceInboxPackage, "data.txt"),
+            "payload");
+        var writer = new XmlOutgoingPackageWriter(workspace.PathResolver, new XmlOutgoingPackagePassportWriter());
         var decision = new RoutingDecision(new PackageItem("order-1", "data.txt", "Data", null, 1, 10m), "order-1");
 
         // Act
-        await writer.WriteAsync(sourceInboxPackage, decision, CancellationToken.None);
+        var draft = await writer.PrepareAsync(sourceInboxPackage, decision, CancellationToken.None);
+        await writer.PublishAsync(draft, CancellationToken.None);
 
         // Assert
-        var targetDirectory = paths.GetOutgoingPackageDirectory(decision);
+        var targetDirectory = workspace.PathResolver.GetOutgoingPackageDirectory(decision);
         Assert.Equal("payload",
-            await File.ReadAllTextAsync(paths.GetTargetAttachmentPath(targetDirectory, "data.txt")));
-        Assert.True(File.Exists(paths.GetPassportPath(targetDirectory)));
+            await File.ReadAllTextAsync(workspace.PathResolver.GetTargetAttachmentPath(targetDirectory, "data.txt")));
+        Assert.True(File.Exists(workspace.PathResolver.GetPassportPath(targetDirectory)));
     }
 
     [Fact]
     public async Task XmlOutgoingPackageWriter_WhenAttachmentIsMissing_DoesNotLeaveTargetPackage()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        var paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var sourcePackage = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -125,12 +112,13 @@ public class XmlPackageInfrastructureTests
                              </item>
                            </shiporder>
                            """);
-        var writer = new XmlOutgoingPackageWriter(paths);
+        var writer = new XmlOutgoingPackageWriter(workspace.PathResolver, new XmlOutgoingPackagePassportWriter());
         var decision = new RoutingDecision(new PackageItem("order-1", "missing.txt", "Data", null, 1, 10m), "order-1");
 
         // Act-Assert
-        await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            writer.WriteAsync(new InboxPackage("package", sourcePackage), decision, CancellationToken.None));
-        Assert.False(Directory.Exists(paths.GetOutgoingPackageDirectory(decision)));
+        await Assert
+            .ThrowsAsync<FileNotFoundException>(() => writer
+                .PrepareAsync(new InboxPackage("package", sourcePackage), decision, CancellationToken.None));
+        Assert.False(Directory.Exists(workspace.PathResolver.GetOutgoingPackageDirectory(decision)));
     }
 }

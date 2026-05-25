@@ -1,9 +1,10 @@
-using RouterNode.Application.Abstractions;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
+using RouterNode.Domain.Files;
+using RouterNode.Domain.Packages;
 
 namespace RouterNode.Infrastructure.Files;
 
-public sealed class FileSystemPackageDeadLetterStore(IPackageFileSystemPaths pathsHelper)
+public sealed class FileSystemPackageDeadLetterStore(IPackageFilePathResolver pathResolver)
     : IPackageDeadLetterStore
 {
     private const string ErrorFileName = "error.txt";
@@ -17,9 +18,9 @@ public sealed class FileSystemPackageDeadLetterStore(IPackageFileSystemPaths pat
             return Task.CompletedTask;
         }
 
-        Directory.CreateDirectory(pathsHelper.DeadLetterPath);
+        Directory.CreateDirectory(pathResolver.DeadLetterPath);
 
-        var deadLetterDirectory = pathsHelper.GetDeadLetterPackageDirectory(package, DateTimeOffset.UtcNow);
+        var deadLetterDirectory = pathResolver.GetDeadLetterPackageDirectory(package, DateTimeOffset.UtcNow);
         Directory.Move(package.FullPath, deadLetterDirectory);
 
         return File

@@ -1,6 +1,6 @@
-namespace RouterNode.Application.Abstractions;
+using RouterNode.Domain.Entities;
 
-using Packages;
+namespace RouterNode.Domain.Packages;
 
 public interface IPackageDeadLetterStore
 {

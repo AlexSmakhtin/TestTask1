@@ -1,9 +1,9 @@
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
 using RouterNode.Domain.Routing;
 
-namespace RouterNode.Infrastructure.Files;
+namespace RouterNode.Domain.Files;
 
-public interface IPackageFileSystemPaths
+public interface IPackageFilePathResolver
 {
     string InboxPath { get; }
 

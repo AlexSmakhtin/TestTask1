@@ -1,6 +1,6 @@
 using RouterNode.Domain.Routing;
 
-namespace RouterNode.Domain.Packages;
+namespace RouterNode.Domain.Entities;
 
 public record PackageItem(string OrderId,
     string Attachment,

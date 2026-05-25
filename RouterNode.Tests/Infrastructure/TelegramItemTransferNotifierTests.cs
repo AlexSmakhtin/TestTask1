@@ -2,7 +2,7 @@ using System.Net;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 using RouterNode.Infrastructure.Telegram;
 using Xunit;
 

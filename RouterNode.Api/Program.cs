@@ -1,9 +1,10 @@
 using RouterNode.Application.Packages;
+using RouterNode.Domain.Routing;
 using RouterNode.HostedServices;
 using RouterNode.Infrastructure;
 using RouterNode.Infrastructure.Files;
+using RouterNode.Infrastructure.Packages;
 using RouterNode.Infrastructure.Telegram;
-using RouterNode.Options;
 
 namespace RouterNode;
 
@@ -22,7 +23,8 @@ public class Program
         builder.Services
             .AddOptions<FileSystemPackageOptions>()
             .Bind(builder.Configuration.GetSection("FileSystemPackageStorage"))
-            .Validate(options => !string.IsNullOrWhiteSpace(options.InboxPath), "FileSystemPackageStorage:InboxPath is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.InboxPath),
+                "FileSystemPackageStorage:InboxPath is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.OutboxPath),
                 "FileSystemPackageStorage:OutboxPath is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.ProcessingPath),

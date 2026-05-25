@@ -1,10 +1,10 @@
-namespace RouterNode.Domain.Packages;
+namespace RouterNode.Domain.Entities;
 
 public record PackagePassport
 {
-    public IReadOnlyCollection<PackageItem> Items { get; }
+    public IReadOnlyList<PackageItem> Items { get; }
 
-    public PackagePassport(IReadOnlyCollection<PackageItem> items)
+    public PackagePassport(IReadOnlyList<PackageItem> items)
     {
         if (items.Count == 0)
         {

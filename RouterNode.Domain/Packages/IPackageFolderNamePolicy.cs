@@ -1,4 +1,4 @@
-namespace RouterNode.Domain.Routing;
+namespace RouterNode.Domain.Packages;
 
 public interface IPackageFolderNamePolicy
 {

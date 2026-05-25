@@ -1,6 +1,6 @@
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 
-namespace RouterNode.Application.Abstractions;
+namespace RouterNode.Domain.Notifications;
 
 public interface IItemTransferNotifier
 {

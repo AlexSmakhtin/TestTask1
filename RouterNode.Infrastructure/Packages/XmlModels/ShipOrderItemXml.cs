@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Xml.Serialization;
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 
 namespace RouterNode.Infrastructure.Packages.XmlModels;
 

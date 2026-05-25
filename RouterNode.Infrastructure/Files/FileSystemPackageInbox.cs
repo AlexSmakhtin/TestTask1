@@ -1,20 +1,21 @@
-using RouterNode.Application.Abstractions;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
+using RouterNode.Domain.Files;
+using RouterNode.Domain.Packages;
 
 namespace RouterNode.Infrastructure.Files;
 
-public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
+public sealed class FileSystemPackageInbox(IPackageFilePathResolver pathResolver)
     : IPackageInbox
 {
     public IReadOnlyList<InboxPackage> GetReadyPackages()
     {
-        Directory.CreateDirectory(pathsHelper.InboxPath);
-        Directory.CreateDirectory(pathsHelper.ProcessingPath);
+        Directory.CreateDirectory(pathResolver.InboxPath);
+        Directory.CreateDirectory(pathResolver.ProcessingPath);
 
         MoveReadyPackagesToProcessing();
 
         return Directory
-            .EnumerateDirectories(pathsHelper.ProcessingPath)
+            .EnumerateDirectories(pathResolver.ProcessingPath)
             .Where(IsReadyPackage)
             .OrderBy(Directory.GetCreationTimeUtc)
             .Select(x => new InboxPackage(Path.GetFileName(x), x))
@@ -24,12 +25,12 @@ public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
     private void MoveReadyPackagesToProcessing()
     {
         foreach (var packageDirectory in Directory
-                     .EnumerateDirectories(pathsHelper.InboxPath)
+                     .EnumerateDirectories(pathResolver.InboxPath)
                      .Where(IsReadyPackage)
                      .OrderBy(Directory.GetCreationTimeUtc))
         {
             var packageName = Path.GetFileName(packageDirectory);
-            var processingDirectory = pathsHelper.GetProcessingPackageDirectory(packageName);
+            var processingDirectory = pathResolver.GetProcessingPackageDirectory(packageName);
 
             if (Directory.Exists(processingDirectory))
             {
@@ -51,7 +52,7 @@ public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
 
     private bool IsReadyPackage(string packageDirectory)
     {
-        var passportPath = pathsHelper.GetPassportPath(packageDirectory);
+        var passportPath = pathResolver.GetPassportPath(packageDirectory);
         if (!File.Exists(passportPath))
         {
             return false;

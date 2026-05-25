@@ -1,11 +1,12 @@
 using Microsoft.Extensions.Options;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
+using RouterNode.Domain.Files;
 using RouterNode.Domain.Routing;
 
 namespace RouterNode.Infrastructure.Files;
 
-public class PackageFileSystemPathsHelper(IOptions<FileSystemPackageOptions> options)
-    : IPackageFileSystemPaths
+public class PackageFilePathResolver(IOptions<FileSystemPackageOptions> options)
+    : IPackageFilePathResolver
 {
     private FileSystemPackageOptions Options { get; } = options.Value;
 

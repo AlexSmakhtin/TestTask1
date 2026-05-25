@@ -13,7 +13,8 @@
       <Content Include="..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
-      <Content Update="schema.xsd">
+      <None Remove="schema.xsd" />
+      <Content Include="schema.xsd">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>
@@ -22,6 +23,11 @@
     <ItemGroup>
       <ProjectReference Include="..\RouterNode.Application\RouterNode.Application.csproj" />
       <ProjectReference Include="..\RouterNode.Infrastructure\RouterNode.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="data\" />
+      <Folder Include="data\inbox\" />
     </ItemGroup>
 
 </Project>

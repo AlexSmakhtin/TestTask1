@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using RouterNode.Infrastructure.Files;
 using Xunit;
 
@@ -10,10 +9,7 @@ public sealed class FileSystemPackageInboxTests
     public async Task GetReadyPackagesAsync_MovesInboxPackageToProcessingAndReturnsItFromProcessing()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        var paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var inboxPackageDirectory = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -26,12 +22,13 @@ public sealed class FileSystemPackageInboxTests
                              </item>
                            </shiporder>
                            """);
-        var inbox = new FileSystemPackageInbox(paths);
+        var inbox = new FileSystemPackageInbox(workspace.PathResolver);
 
         // Act
         var firstRead = inbox.GetReadyPackages();
         var secondRead = inbox.GetReadyPackages();
-        var processingPackageDirectory = paths.GetProcessingPackageDirectory(Path.GetFileName(inboxPackageDirectory));
+        var processingPackageDirectory = workspace.PathResolver
+            .GetProcessingPackageDirectory(Path.GetFileName(inboxPackageDirectory));
 
         // Assert
         Assert.False(Directory.Exists(inboxPackageDirectory));
@@ -44,10 +41,7 @@ public sealed class FileSystemPackageInboxTests
     public async Task GetReadyPackagesAsync_WhenPassportIsLocked_DoesNotMovePackageToProcessing()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        var paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var inboxPackageDirectory = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -60,9 +54,9 @@ public sealed class FileSystemPackageInboxTests
                              </item>
                            </shiporder>
                            """);
-        var passportPath = paths.GetPassportPath(inboxPackageDirectory);
+        var passportPath = workspace.PathResolver.GetPassportPath(inboxPackageDirectory);
         await using var _ = new FileStream(passportPath, FileMode.Open, FileAccess.Read, FileShare.None);
-        var inbox = new FileSystemPackageInbox(paths);
+        var inbox = new FileSystemPackageInbox(workspace.PathResolver);
 
         // Act
         var readyPackages = inbox.GetReadyPackages();
@@ -70,6 +64,7 @@ public sealed class FileSystemPackageInboxTests
         // Assert
         Assert.Empty(readyPackages);
         Assert.True(Directory.Exists(inboxPackageDirectory));
-        Assert.False(Directory.Exists(paths.GetProcessingPackageDirectory(Path.GetFileName(inboxPackageDirectory))));
+        Assert.False(Directory.Exists(workspace.PathResolver
+            .GetProcessingPackageDirectory(Path.GetFileName(inboxPackageDirectory))));
     }
 }

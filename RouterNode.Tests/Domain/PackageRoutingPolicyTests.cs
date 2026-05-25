@@ -1,4 +1,5 @@
-using RouterNode.Domain.Packages;
+using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
 using RouterNode.Domain.Routing;
 using RouterNode.Tests.Domain.TestData;
 using Xunit;
@@ -16,7 +17,7 @@ public sealed class PackageRoutingPolicyTests
         var passport = new PackagePassport([new PackageItem("order-1", "a.txt", "Item", null, 1, price)]);
 
         // Act
-        var decision = policy.Route(passport)[0];
+        var decision = policy.GetRouteDecisions(passport)[0];
 
         // Assert
         Assert.Equal(expectedChannel, decision.Item.RouteChannel);

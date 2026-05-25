@@ -1,8 +1,8 @@
-using RouterNode.Domain.Packages;
+using RouterNode.Domain.Entities;
 
 namespace RouterNode.Domain.Routing;
 
 public interface IPackageRoutingPolicy
 {
-    IReadOnlyList<RoutingDecision> Route(PackagePassport passport);
+    IReadOnlyList<RoutingDecision> GetRouteDecisions(PackagePassport passport);
 }

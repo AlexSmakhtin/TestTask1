@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Options;
-using RouterNode.Application.Packages;
+using RouterNode.Domain.Entities;
 using RouterNode.Infrastructure.Files;
 using Xunit;
 
@@ -11,10 +10,7 @@ public sealed class FileSystemPackageDeadLetterStoreTests
     public async Task MoveAsync_MovesPackageToDeadLetterDirectoryAndWritesErrorDetails()
     {
         // Arrange
-        var options = TestFileSystemPackageOptionsBuilder.Create();
-        var paths = new PackageFileSystemPathsHelper(Options.Create(options));
-        using var workspace = new TestTemporaryWorkspace(options);
-        await workspace.InitializeAsync();
+        using var workspace = await TestTemporaryWorkspace.CreateAsync();
         var packageDirectory = await workspace
             .CreatePackage("""
                            <?xml version="1.0" encoding="utf-8"?>
@@ -28,15 +24,15 @@ public sealed class FileSystemPackageDeadLetterStoreTests
                            </shiporder>
                            """);
         var package = new InboxPackage("package-1", packageDirectory);
-        var deadLetterStore = new FileSystemPackageDeadLetterStore(paths);
+        var deadLetterStore = new FileSystemPackageDeadLetterStore(workspace.PathResolver);
 
         // Act
         await deadLetterStore.MoveAsync(package, new InvalidDataException("Invalid package."), CancellationToken.None);
 
         // Assert
         Assert.False(Directory.Exists(packageDirectory));
-        var deadLetterPackage = Assert.Single(Directory.GetDirectories(options.DeadLetterPath));
-        Assert.True(File.Exists(Path.Combine(deadLetterPackage, options.PassportFileName)));
+        var deadLetterPackage = Assert.Single(Directory.GetDirectories(workspace.Options.DeadLetterPath));
+        Assert.True(File.Exists(Path.Combine(deadLetterPackage, workspace.Options.PassportFileName)));
         Assert.Contains("Invalid package.", await File.ReadAllTextAsync(Path.Combine(deadLetterPackage, "error.txt")));
     }
 }

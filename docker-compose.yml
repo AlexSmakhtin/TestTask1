@@ -1,0 +1,17 @@
+services:
+  router-node:
+    build:
+      context: .
+      dockerfile: RouterNode.Api/Dockerfile
+    image: router-node:test
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      Telegram__ChatId: ${TELEGRAM_CHAT_ID}
+    volumes:
+      - router-node-data:/app/data
+    ports:
+      - "8080:8080"
+
+volumes:
+  router-node-data:

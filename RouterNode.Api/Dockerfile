@@ -1,6 +1,8 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
+RUN mkdir -p /app/data && chown -R $APP_UID /app/data
+USER $APP_UID
+VOLUME ["/app/data"]
 EXPOSE 8080
 EXPOSE 8081
 

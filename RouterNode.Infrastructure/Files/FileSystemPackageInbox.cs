@@ -15,7 +15,7 @@ public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
 
         return Directory
             .EnumerateDirectories(pathsHelper.ProcessingPath)
-            .Where(pathsHelper.HasPassport)
+            .Where(IsReadyPackage)
             .OrderBy(Directory.GetCreationTimeUtc)
             .Select(x => new InboxPackage(Path.GetFileName(x), x))
             .ToArray();
@@ -25,7 +25,7 @@ public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
     {
         foreach (var packageDirectory in Directory
                      .EnumerateDirectories(pathsHelper.InboxPath)
-                     .Where(pathsHelper.HasPassport)
+                     .Where(IsReadyPackage)
                      .OrderBy(Directory.GetCreationTimeUtc))
         {
             var packageName = Path.GetFileName(packageDirectory);
@@ -36,7 +36,40 @@ public sealed class FileSystemPackageInbox(IPackageFileSystemPaths pathsHelper)
                 continue;
             }
 
-            Directory.Move(packageDirectory, processingDirectory);
+            try
+            {
+                Directory.Move(packageDirectory, processingDirectory);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    private bool IsReadyPackage(string packageDirectory)
+    {
+        var passportPath = pathsHelper.GetPassportPath(packageDirectory);
+        if (!File.Exists(passportPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var _ = new FileStream(passportPath, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
         }
     }
 }

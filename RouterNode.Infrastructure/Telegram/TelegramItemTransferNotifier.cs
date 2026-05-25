@@ -13,7 +13,8 @@ public class TelegramItemTransferNotifier(HttpClient httpClient, IOptions<Telegr
     public async Task NotifyAsync(PackageItem item, CancellationToken cancellationToken)
     {
         var response = await httpClient
-            .PostAsJsonAsync(Options.Url, new TelegramSendMessageRequest(item, Options.ChatId), cancellationToken);
+            .PostAsJsonAsync(Options.SendMessageUri, new TelegramSendMessageRequest(item, Options.ChatId),
+                cancellationToken);
 
         response.EnsureSuccessStatusCode();
     }

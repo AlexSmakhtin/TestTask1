@@ -8,5 +8,5 @@ public class TelegramOptions
 
     public string ChatId { get; set; } = null!;
 
-    public string Url => $"bot{BotToken}/sendMessage";
+    public Uri SendMessageUri => new($"{ApiBaseUrl.TrimEnd('/')}/bot{BotToken}/sendMessage", UriKind.Absolute);
 }

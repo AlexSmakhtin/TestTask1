@@ -5,7 +5,9 @@ namespace RouterNode.Application.Abstractions;
 
 public interface IOutgoingPackageWriter
 {
-    bool Exists(RoutingDecision decision);
+    bool IsAlreadyWritten(RoutingDecision decision);
+
+    void EnsureCanWrite(InboxPackage sourcePackage, IReadOnlyCollection<RoutingDecision> decisions);
 
     Task WriteAsync(InboxPackage sourcePackage, RoutingDecision decision, CancellationToken cancellationToken);
 }

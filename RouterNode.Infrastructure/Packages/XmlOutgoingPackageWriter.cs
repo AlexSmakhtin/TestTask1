@@ -21,11 +21,19 @@ public sealed class XmlOutgoingPackageWriter(IPackageFileSystemPaths pathsHelper
         Encoding = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
     };
 
-    public bool Exists(RoutingDecision decision)
+    public bool IsAlreadyWritten(RoutingDecision decision)
     {
         var targetDirectory = pathsHelper.GetOutgoingPackageDirectory(decision);
 
         return Directory.Exists(targetDirectory) && pathsHelper.HasPassport(targetDirectory);
+    }
+
+    public void EnsureCanWrite(InboxPackage sourcePackage, IReadOnlyCollection<RoutingDecision> decisions)
+    {
+        foreach (var decision in decisions.Where(decision => !IsAlreadyWritten(decision)))
+        {
+            EnsureAttachmentExists(sourcePackage, decision.Item);
+        }
     }
 
     public async Task WriteAsync(InboxPackage sourcePackage, RoutingDecision decision,
@@ -75,9 +83,7 @@ public sealed class XmlOutgoingPackageWriter(IPackageFileSystemPaths pathsHelper
         var sourcePath = pathsHelper.GetSourceAttachmentPath(sourcePackage, attachmentFileName);
         if (!File.Exists(sourcePath))
         {
-            throw new FileNotFoundException(
-                $"Attachment '{attachmentFileName}' was not found in package '{sourcePackage.FullPath}'.",
-                sourcePath);
+            ThrowAttachmentNotFound(sourcePackage, attachmentFileName, sourcePath);
         }
 
         var targetPath = pathsHelper.GetTargetAttachmentPath(targetDirectory, attachmentFileName);
@@ -86,6 +92,28 @@ public sealed class XmlOutgoingPackageWriter(IPackageFileSystemPaths pathsHelper
         await using var target = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None,
             bufferSize: FileSystemDefaults.StreamBufferSize, useAsync: true);
         await source.CopyToAsync(target, cancellationToken);
+    }
+
+    private void EnsureAttachmentExists(InboxPackage sourcePackage, PackageItem item)
+    {
+        if (string.Equals(item.Attachment, pathsHelper.PassportFileName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var attachmentFileName = Path.GetFileName(item.Attachment);
+        var sourcePath = pathsHelper.GetSourceAttachmentPath(sourcePackage, attachmentFileName);
+        if (!File.Exists(sourcePath))
+        {
+            ThrowAttachmentNotFound(sourcePackage, attachmentFileName, sourcePath);
+        }
+    }
+
+    private static void ThrowAttachmentNotFound(InboxPackage sourcePackage, string attachmentFileName, string sourcePath)
+    {
+        throw new FileNotFoundException(
+            $"Attachment '{attachmentFileName}' was not found in package '{sourcePackage.FullPath}'.",
+            sourcePath);
     }
 
     private async Task WritePassportAsync(string targetDirectory, PackageItem item)

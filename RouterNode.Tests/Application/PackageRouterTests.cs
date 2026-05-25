@@ -143,6 +143,41 @@ public sealed class PackageRouterTests
     }
 
     [Fact]
+    public async Task ProcessReadyPackagesAsync_WhenPackageCannotBeWritten_DoesNotNotifyWriteOrArchivePackage()
+    {
+        // Arrange
+        var package = new InboxPackage("package-1", "processing/package-1");
+        var passport = new PackagePassport([new PackageItem("order-1", "missing.txt", "Data", null, 1, 10m)]);
+
+        _inbox
+            .Setup(service => service.GetReadyPackages())
+            .Returns([package]);
+        _reader
+            .Setup(service => service.ReadAsync(package, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(passport);
+        _writer
+            .Setup(service => service.EnsureCanWrite(package, It.IsAny<IReadOnlyCollection<RoutingDecision>>()))
+            .Throws(new FileNotFoundException("Attachment is missing."));
+
+        // Act
+        var result = await _router.ProcessReadyPackagesAsync(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(0, result.PackagesProcessed);
+        Assert.Equal(0, result.ItemsRouted);
+        Assert.Equal(1, result.PackagesFailed);
+        _notifier
+            .Verify(service => service.NotifyAsync(It.IsAny<PackageItem>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        _writer
+            .Verify(service => service.WriteAsync(It.IsAny<InboxPackage>(), It.IsAny<RoutingDecision>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Never);
+        _archiver.Verify(service => service.ArchiveAsync(It.IsAny<InboxPackage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task ProcessReadyPackagesAsync_WhenOutgoingPackageAlreadyExists_SkipsNotifyAndWrite()
     {
         // Arrange
@@ -156,7 +191,7 @@ public sealed class PackageRouterTests
             .Setup(service => service.ReadAsync(package, It.IsAny<CancellationToken>()))
             .ReturnsAsync(passport);
         _writer
-            .Setup(service => service.Exists(It.IsAny<RoutingDecision>()))
+            .Setup(service => service.IsAlreadyWritten(It.IsAny<RoutingDecision>()))
             .Returns(true);
 
         // Act
@@ -164,7 +199,7 @@ public sealed class PackageRouterTests
 
         // Assert
         Assert.Equal(1, result.PackagesProcessed);
-        Assert.Equal(1, result.ItemsRouted);
+        Assert.Equal(0, result.ItemsRouted);
         Assert.Equal(0, result.PackagesFailed);
         _notifier
             .Verify(service => service.NotifyAsync(It.IsAny<PackageItem>(), It.IsAny<CancellationToken>()),

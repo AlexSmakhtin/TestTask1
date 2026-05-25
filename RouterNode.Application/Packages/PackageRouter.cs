@@ -25,13 +25,12 @@ public class PackageRouter(IPackageInbox inbox,
             {
                 var passport = await passportReader.ReadAsync(package, cancellationToken);
                 var decisions = routingPolicy.Route(passport);
+                outgoingPackageWriter.EnsureCanWrite(package, decisions);
 
                 foreach (var decision in decisions)
                 {
-                    if (outgoingPackageWriter.Exists(decision))
+                    if (outgoingPackageWriter.IsAlreadyWritten(decision))
                     {
-                        itemsRouted++;
-
                         continue;
                     }
 

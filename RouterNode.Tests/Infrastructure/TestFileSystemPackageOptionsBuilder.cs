@@ -14,6 +14,7 @@ public static class TestFileSystemPackageOptionsBuilder
             OutboxPath = Path.Combine(path, "outbox"),
             ProcessingPath = Path.Combine(path, "processing"),
             ArchivePath = Path.Combine(path, "archive"),
+            DeadLetterPath = Path.Combine(path, "dead-letter"),
             SchemaPath = Path.Combine(path, "schema.xsd"),
             PassportFileName = "passport.xml"
         };

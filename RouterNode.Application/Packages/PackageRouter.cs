@@ -8,6 +8,7 @@ public class PackageRouter(IPackageInbox inbox,
     IPackagePassportReader passportReader,
     IOutgoingPackageWriter outgoingPackageWriter,
     IPackageArchiver packageArchiver,
+    IPackageDeadLetterStore packageDeadLetterStore,
     IItemTransferNotifier itemTransferNotifier,
     IPackageRoutingPolicy routingPolicy,
     ILogger<PackageRouter> logger)
@@ -46,9 +47,23 @@ public class PackageRouter(IPackageInbox inbox,
             {
                 packagesFailed++;
                 logger.LogError(exception, "Failed to process package {PackageName}", package.Name);
+                await MoveToDeadLetterAsync(package, exception, cancellationToken);
             }
         }
 
         return new PackageProcessingResult(packagesProcessed, itemsRouted, packagesFailed);
+    }
+
+    private async Task MoveToDeadLetterAsync(InboxPackage package, Exception reason,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await packageDeadLetterStore.MoveAsync(package, reason, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Failed to move package {PackageName} to dead letter storage.", package.Name);
+        }
     }
 }

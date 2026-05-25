@@ -18,6 +18,7 @@ public class TestTemporaryWorkspace : IDisposable
         Directory.CreateDirectory(Options.OutboxPath);
         Directory.CreateDirectory(Options.ProcessingPath);
         Directory.CreateDirectory(Options.ArchivePath);
+        Directory.CreateDirectory(Options.DeadLetterPath);
     }
 
     public async Task InitializeAsync()

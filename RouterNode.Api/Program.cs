@@ -9,9 +9,9 @@ namespace RouterNode;
 
 public class Program
 {
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        var builder = Host.CreateApplicationBuilder();
+        var builder = Host.CreateApplicationBuilder(args);
 
         builder.Services
             .AddOptions<PackageRouterOptions>()
@@ -29,6 +29,8 @@ public class Program
                 "FileSystemPackageStorage:ProcessingPath is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.ArchivePath),
                 "FileSystemPackageStorage:ArchivePath is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.DeadLetterPath),
+                "FileSystemPackageStorage:DeadLetterPath is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.SchemaPath),
                 "FileSystemPackageStorage:SchemaPath is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.PassportFileName),

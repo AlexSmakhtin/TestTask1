@@ -17,6 +17,8 @@ public class PackageFileSystemPathsHelper(IOptions<FileSystemPackageOptions> opt
 
     public string ArchivePath => Options.ArchivePath;
 
+    public string DeadLetterPath => Options.DeadLetterPath;
+
     public string SchemaPath => Options.SchemaPath;
 
     public string ProcessingPath => Options.ProcessingPath;
@@ -49,4 +51,7 @@ public class PackageFileSystemPathsHelper(IOptions<FileSystemPackageOptions> opt
 
     public string GetArchivePath(InboxPackage package, DateTimeOffset archivedAt)
         => Path.Combine(ArchivePath, $"{package.Name}-{archivedAt:yyyyMMddHHmmssfff}.zip");
+
+    public string GetDeadLetterPackageDirectory(InboxPackage package, DateTimeOffset failedAt)
+        => Path.Combine(DeadLetterPath, $"{package.Name}-{failedAt:yyyyMMddHHmmssfff}");
 }

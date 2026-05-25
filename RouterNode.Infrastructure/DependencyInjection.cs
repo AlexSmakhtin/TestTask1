@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<IPackagePassportReader, XmlPackagePassportReader>();
         services.AddSingleton<IOutgoingPackageWriter, XmlOutgoingPackageWriter>();
         services.AddSingleton<IPackageArchiver, ZipPackageArchiver>();
+        services.AddSingleton<IPackageDeadLetterStore, FileSystemPackageDeadLetterStore>();
         services.AddHttpClient<IItemTransferNotifier, TelegramItemTransferNotifier>((provider, client) =>
         {
             var options = provider.GetRequiredService<IOptions<TelegramOptions>>().Value;

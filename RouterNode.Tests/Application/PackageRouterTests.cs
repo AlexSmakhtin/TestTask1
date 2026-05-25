@@ -18,6 +18,8 @@ public sealed class PackageRouterTests
 
     private readonly Mock<IPackageArchiver> _archiver;
 
+    private readonly Mock<IPackageDeadLetterStore> _deadLetterStore;
+
     private readonly Mock<IItemTransferNotifier> _notifier;
 
     private readonly PackageRouter _router;
@@ -28,10 +30,11 @@ public sealed class PackageRouterTests
         _reader = new Mock<IPackagePassportReader>();
         _writer = new Mock<IOutgoingPackageWriter>();
         _archiver = new Mock<IPackageArchiver>();
+        _deadLetterStore = new Mock<IPackageDeadLetterStore>();
         _notifier = new Mock<IItemTransferNotifier>();
         IPackageRoutingPolicy routingPolicy1 = new PackageRoutingPolicy(new SafePackageFolderNamePolicy());
         _router = new PackageRouter(_inbox.Object, _reader.Object, _writer.Object, _archiver.Object,
-            _notifier.Object, routingPolicy1, NullLogger<PackageRouter>.Instance);
+            _deadLetterStore.Object, _notifier.Object, routingPolicy1, NullLogger<PackageRouter>.Instance);
     }
 
     [Fact]
@@ -78,6 +81,10 @@ public sealed class PackageRouterTests
             service => service.NotifyAsync(It.IsAny<PackageItem>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
         _archiver.Verify(service => service.ArchiveAsync(package, It.IsAny<CancellationToken>()), Times.Once);
+        _deadLetterStore
+            .Verify(service => service
+                    .MoveAsync(It.IsAny<InboxPackage>(), It.IsAny<Exception>(), It.IsAny<CancellationToken>()),
+                Times.Never);
     }
 
     [Fact]
@@ -106,6 +113,10 @@ public sealed class PackageRouterTests
             Times.Never);
         _archiver.Verify(service => service.ArchiveAsync(It.IsAny<InboxPackage>(), It.IsAny<CancellationToken>()),
             Times.Never);
+        _deadLetterStore
+            .Verify(service => service
+                    .MoveAsync(package, It.IsAny<InvalidDataException>(), It.IsAny<CancellationToken>()),
+                Times.Once);
     }
 
     [Fact]
@@ -140,6 +151,10 @@ public sealed class PackageRouterTests
                 Times.Never);
         _archiver.Verify(service => service.ArchiveAsync(It.IsAny<InboxPackage>(), It.IsAny<CancellationToken>()),
             Times.Never);
+        _deadLetterStore
+            .Verify(service => service
+                    .MoveAsync(package, It.IsAny<HttpRequestException>(), It.IsAny<CancellationToken>()),
+                Times.Once);
     }
 
     [Fact]
@@ -175,6 +190,10 @@ public sealed class PackageRouterTests
                 Times.Never);
         _archiver.Verify(service => service.ArchiveAsync(It.IsAny<InboxPackage>(), It.IsAny<CancellationToken>()),
             Times.Never);
+        _deadLetterStore
+            .Verify(service => service
+                    .MoveAsync(package, It.IsAny<FileNotFoundException>(), It.IsAny<CancellationToken>()),
+                Times.Once);
     }
 
     [Fact]
@@ -209,5 +228,9 @@ public sealed class PackageRouterTests
                     .WriteAsync(It.IsAny<InboxPackage>(), It.IsAny<RoutingDecision>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         _archiver.Verify(service => service.ArchiveAsync(package, It.IsAny<CancellationToken>()), Times.Once);
+        _deadLetterStore
+            .Verify(service => service.MoveAsync(It.IsAny<InboxPackage>(), It.IsAny<Exception>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Never);
     }
 }

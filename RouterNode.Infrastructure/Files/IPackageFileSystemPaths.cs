@@ -9,6 +9,8 @@ public interface IPackageFileSystemPaths
 
     string ArchivePath { get; }
 
+    string DeadLetterPath { get; }
+
     string SchemaPath { get; }
 
     string ProcessingPath { get; }
@@ -32,4 +34,6 @@ public interface IPackageFileSystemPaths
     string GetTargetAttachmentPath(string targetDirectory, string attachmentFileName);
 
     string GetArchivePath(InboxPackage package, DateTimeOffset archivedAt);
+
+    string GetDeadLetterPackageDirectory(InboxPackage package, DateTimeOffset failedAt);
 }

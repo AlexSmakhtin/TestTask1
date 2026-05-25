@@ -10,6 +10,8 @@ public class FileSystemPackageOptions
 
     public string ArchivePath { get; set; } = null!;
 
+    public string DeadLetterPath { get; set; } = null!;
+
     public string SchemaPath { get; set; } = null!;
 
     public string PassportFileName { get; set; } = null!;

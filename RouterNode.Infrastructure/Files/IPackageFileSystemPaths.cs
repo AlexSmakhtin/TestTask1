@@ -11,15 +11,9 @@ public interface IPackageFileSystemPaths
 
     string SchemaPath { get; }
 
-    string OutboxPath { get; }
-
     string ProcessingPath { get; }
 
     string PassportFileName { get; }
-
-    string WorkspacePath { get; }
-
-    string GetInboxPackageDirectory(string packageFolderName);
 
     string GetProcessingPackageDirectory(string packageFolderName);
 

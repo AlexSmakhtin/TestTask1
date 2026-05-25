@@ -19,17 +19,9 @@ public class PackageFileSystemPathsHelper(IOptions<FileSystemPackageOptions> opt
 
     public string SchemaPath => Options.SchemaPath;
 
-    public string OutboxPath => Options.OutboxPath;
-
     public string ProcessingPath => Options.ProcessingPath;
 
     public string PassportFileName => Options.PassportFileName;
-
-    public string WorkspacePath =>
-        Directory.GetParent(InboxPath)?.FullName
-        ?? throw new InvalidOperationException("Inbox path must have a parent directory.");
-
-    public string GetInboxPackageDirectory(string packageFolderName) => Path.Combine(InboxPath, packageFolderName);
 
     public string GetProcessingPackageDirectory(string packageFolderName)
         => Path.Combine(ProcessingPath, packageFolderName);

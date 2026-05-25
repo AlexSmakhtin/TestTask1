@@ -4,43 +4,41 @@ namespace RouterNode.Tests.Infrastructure;
 
 public class TestTemporaryWorkspace : IDisposable
 {
-    private string Path { get; }
+    private string WorkspacePath { get; }
 
     private FileSystemPackageOptions Options { get; }
-
-    private IPackageFileSystemPaths PathsHelper { get; }
 
     public TestTemporaryWorkspace(FileSystemPackageOptions options)
     {
         Options = options;
-        PathsHelper = new PackageFileSystemPathsHelper(Microsoft.Extensions.Options.Options.Create(options));
-        Path = PathsHelper.WorkspacePath;
+        WorkspacePath = Directory.GetParent(Options.InboxPath)?.FullName
+                        ?? throw new InvalidOperationException("Inbox path must have a parent directory.");
 
-        Directory.CreateDirectory(PathsHelper.InboxPath);
-        Directory.CreateDirectory(PathsHelper.OutboxPath);
-        Directory.CreateDirectory(PathsHelper.ProcessingPath);
-        Directory.CreateDirectory(PathsHelper.ArchivePath);
+        Directory.CreateDirectory(Options.InboxPath);
+        Directory.CreateDirectory(Options.OutboxPath);
+        Directory.CreateDirectory(Options.ProcessingPath);
+        Directory.CreateDirectory(Options.ArchivePath);
     }
 
     public async Task InitializeAsync()
     {
-        await File.WriteAllTextAsync(PathsHelper.SchemaPath, TestXmlSchemas.PackageSchema);
+        await File.WriteAllTextAsync(Options.SchemaPath, TestXmlSchemas.PackageSchema);
     }
 
     public async Task<string> CreatePackage(string passport)
     {
-        var packageDirectory = PathsHelper.GetInboxPackageDirectory(Guid.NewGuid().ToString("N"));
+        var packageDirectory = Path.Combine(Options.InboxPath, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(packageDirectory);
-        await File.WriteAllTextAsync(PathsHelper.GetPassportPath(packageDirectory), passport);
+        await File.WriteAllTextAsync(Path.Combine(packageDirectory, Options.PassportFileName), passport);
 
         return packageDirectory;
     }
 
     public void Dispose()
     {
-        if (Directory.Exists(Path))
+        if (Directory.Exists(WorkspacePath))
         {
-            Directory.Delete(Path, recursive: true);
+            Directory.Delete(WorkspacePath, recursive: true);
         }
     }
 }

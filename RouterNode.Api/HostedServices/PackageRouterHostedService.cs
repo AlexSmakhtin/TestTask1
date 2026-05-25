@@ -4,7 +4,7 @@ using RouterNode.Options;
 
 namespace RouterNode.HostedServices;
 
-public sealed class PackageRouterHostedService(PackageRouter packageRouter,
+public sealed class PackageRouterHostedService(IPackageRouter packageRouter,
     IOptions<PackageRouterOptions> options,
     ILogger<PackageRouterHostedService> logger)
     : BackgroundService
@@ -13,8 +13,6 @@ public sealed class PackageRouterHostedService(PackageRouter packageRouter,
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var interval = TimeSpan.FromSeconds(Options.PollingIntervalSeconds);
-
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -29,7 +27,7 @@ public sealed class PackageRouterHostedService(PackageRouter packageRouter,
                         packagesProcessed, itemsRouted, packagesFailed);
                 }
 
-                await Task.Delay(interval, cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(Options.PollingIntervalSeconds), cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

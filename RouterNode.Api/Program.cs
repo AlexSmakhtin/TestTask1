@@ -38,8 +38,10 @@ public class Program
             .AddOptions<TelegramOptions>()
             .Bind(builder.Configuration.GetSection("Telegram"))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ApiBaseUrl), "Telegram:ApiBaseUrl is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.BotToken), "Telegram:BotToken is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.ChatId), "Telegram:ChatId is required.")
             .ValidateOnStart();
-        builder.Services.AddSingleton<PackageRouter>();
+        builder.Services.AddSingleton<IPackageRouter, PackageRouter>();
         builder.Services.AddRouterNodeInfrastructure();
         builder.Services.AddHostedService<PackageRouterHostedService>();
 

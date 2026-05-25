@@ -4,13 +4,14 @@ using RouterNode.Domain.Routing;
 
 namespace RouterNode.Application.Packages;
 
-public sealed class PackageRouter(IPackageInbox inbox,
+public class PackageRouter(IPackageInbox inbox,
     IPackagePassportReader passportReader,
     IOutgoingPackageWriter outgoingPackageWriter,
     IPackageArchiver packageArchiver,
     IItemTransferNotifier itemTransferNotifier,
     IPackageRoutingPolicy routingPolicy,
     ILogger<PackageRouter> logger)
+    : IPackageRouter
 {
     public async Task<PackageProcessingResult> ProcessReadyPackagesAsync(CancellationToken cancellationToken)
     {
@@ -34,8 +35,7 @@ public sealed class PackageRouter(IPackageInbox inbox,
                         continue;
                     }
 
-                    await NotifyAsync(decision, cancellationToken);
-
+                    await itemTransferNotifier.NotifyAsync(decision.Item, cancellationToken);
                     await outgoingPackageWriter.WriteAsync(package, decision, cancellationToken);
                     itemsRouted++;
                 }
@@ -51,19 +51,5 @@ public sealed class PackageRouter(IPackageInbox inbox,
         }
 
         return new PackageProcessingResult(packagesProcessed, itemsRouted, packagesFailed);
-    }
-
-    private async Task NotifyAsync(RoutingDecision decision, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await itemTransferNotifier.NotifyAsync(decision.Item, cancellationToken);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            logger.LogWarning(exception,
-                "Failed to send transfer notification for order {OrderId}. Routing result is kept.",
-                decision.Item.OrderId);
-        }
     }
 }
